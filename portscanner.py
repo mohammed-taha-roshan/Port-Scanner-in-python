@@ -7,6 +7,7 @@ import time # to get the time till what time it is scanned
 import ipaddress
 # We need to create regular expressions to ensure that the input is correctly formatted.
 import re
+import subprocess
 
 usage="python3 portscanner.py TARGET START_PORT END_PORT"
 
@@ -17,18 +18,14 @@ port_max = 65535
 while True:
     ip_add_entered = input("\nPlease enter the ip address that you want to scan: ")
     try:
-        target=socket.gethostbyname(ip_add_entered) # host->IP and store in target    
-    except socket.gaierror:  # get address info it it isnt able to convert to ipaddress
-        print("Name resolution error")
-        sys.exit()
-    # If we enter an invalid ip address the try except block will go to the except block and say you entered an invalid ip address.
-    try:
+        target=socket.gethostbyname(ip_add_entered) # host->IP and store in target   
         ip_address_obj = ipaddress.ip_address(target)
         # The following line will only execute if the ip is valid.
         print("You entered a valid ip address.")
-        break
-    except:
-        print("You entered an invalid ip address")
+        break 
+    except socket.gaierror:  # get address info it it isnt able to convert to ipaddress
+        print("Name resolution error")
+        sys.exit()
     
 
 while True:
@@ -49,7 +46,7 @@ while True:
 
 start_time=time.time()
 
-
+list=[]
 print("Scanning:",target)
 def scan_port(port):
 
@@ -63,6 +60,7 @@ def scan_port(port):
     #connect ex just gives the error number not the error msg when it fails
     if(not conn):
         print("Port {} is OPEN".format(port))
+        list.append(port)
     s.close() #if not closed it uses resourses,security risks and compatibility issues(unexpected behaviour)
 
 #to scan all ports in that range
@@ -73,6 +71,16 @@ for port in range(start_port,end_port+1):
     thread.start()
 end_time=time.time()
 print("TIME FOR SCANNING:",end_time-start_time)
+for port in list:
+    print("---------------------------------------------------------------------")
+    print("{}".format(port))    
+    nmap_command = ["nmap","-sV","-p", str(port), str(target)]
 
-
-    
+    try:
+        output = subprocess.check_output(nmap_command)
+        print(output.decode("utf-8"))
+    except subprocess.CalledProcessError as e:
+        print(f"An error occurred: {e}")
+    # # Run the nmap command and capture the output
+    # output = subprocess.check_output(nmap_command)
+    print("---------------------------------------------------------------------")
